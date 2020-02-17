@@ -12,27 +12,7 @@ const server = http.createServer((request, response) => {
             response.write(responseBody)
         }
         response.end()
-    } else if (request.url === '/login' && request.method === 'POST') {
-        request.on('data', function (chunk) {
-            const body = JSON.parse(chunk)
-            if (body.username && body.password) {
-                response.writeHead(200, "OK", {"Content-Type": "application/json"})
-                const responseBody = JSON.stringify({token: '1234abc', username: body.username})
-                response.write(responseBody)
-                response.end()
-            }
-        });
     }
 })
 
 server.listen(3000)
-
-module.exports = {
-    server: server
-}
-
-
-//curl --header "Content-Type: application/json" \
-//   --request POST \
-//   --data '{"username":"xyz","password":"xyz"}' \
-//   http://localhost:3000/api/login
