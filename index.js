@@ -16,16 +16,21 @@ const isFirstNameValid = (firstName = '') => {
     return firstName.length > 3 && regex.test(firstName)
 }
 
-const isPhoneValid = (phone) => {
-    const regex = /\+\d{2}\s\(\d{2}\)\s\d{4,5}-?\d{4}/g;
-    return regex.test(phone);
+const isPhoneValid = (phone = '') => {
+    const regex = /\+\d{2}\s\(\d{2}\)\s\d{4,5}-?\d{4}/g
+    return regex.test(phone)
+}
+
+const isTokenValid = (token = '') => {
+    const regex = /^([a-zA-Z0-9 _-]+)$/
+    return token.length === 16 && regex.test(token)
 }
 
 const generateToken = () => {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    let result = '';
-    for (let i = 16; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    return result;
+    let result = ''
+    for (let i = 16; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)]
+    return result
 }
 
 const isUserInformationValid = (userInformation = {}) => {
@@ -57,6 +62,19 @@ const server = http.createServer((request, response) => {
                 response.end()
             }
         });
+    } else if (request.url === '/simpsons') {
+        console.log(request.headers.authorization)
+        if (isTokenValid(request.headers.authorization)) {
+            console.log(1)
+            response.writeHead(200, "OK", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ endpoints: ['/simpsons/list', '/simpsons/people/:id'] })
+            response.write(responseBody)
+        } else {
+            response.writeHead(401, "Unauthorized", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ message: 'Token inválido!' })
+            response.write(responseBody)
+        }
+        response.end()
     } else {
         response.writeHead(404, "Not Found")
         response.end()
