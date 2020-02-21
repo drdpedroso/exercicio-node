@@ -1,5 +1,5 @@
 const http = require('http')
-const https = require('https');
+const fs = require("fs")
 
 const isEmailValid = (email = '') => {
     const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -54,18 +54,15 @@ const server = http.createServer((request, response) => {
                 response.writeHead(200, "OK", { "Content-Type": "application/json" })
                 const responseBody = JSON.stringify({ token: generateToken()})
                 response.write(responseBody)
-                response.end()
             } else {
                 response.writeHead(400, "Bad Request", { "Content-Type": "application/json" })
                 const responseBody = JSON.stringify({ message: 'Campos inválidos' })
                 response.write(responseBody)
-                response.end()
             }
+            response.end()
         });
     } else if (request.url === '/simpsons') {
-        console.log(request.headers.authorization)
         if (isTokenValid(request.headers.authorization)) {
-            console.log(1)
             response.writeHead(200, "OK", { "Content-Type": "application/json" })
             const responseBody = JSON.stringify({ endpoints: ['/simpsons/list', '/simpsons/people/:id'] })
             response.write(responseBody)
@@ -74,6 +71,36 @@ const server = http.createServer((request, response) => {
             const responseBody = JSON.stringify({ message: 'Token inválido!' })
             response.write(responseBody)
         }
+        response.end()
+    } else if (request.url === '/simpsons/list') {
+        if (isTokenValid(request.headers.authorization)) {
+            const fileContent = fs.readFileSync('simpsons.json')
+            const parsedData = JSON.parse(fileContent)
+            const first5Characters = parsedData.characters.slice(0, 5)
+            response.writeHead(200, "OK", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ characters: first5Characters })
+            response.write(responseBody)
+        } else {
+            response.writeHead(401, "Unauthorized", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ message: 'Token inválido!' })
+            response.write(responseBody)
+        }
+        response.end()
+    } else if (request.url.includes('/simpsons/people/')) {
+        if (isTokenValid(request.headers.authorization)) {
+            const id = request.url.replace('/simpsons/people/', '')
+            const fileContent = fs.readFileSync('simpsons.json')
+            const parsedData = JSON.parse(fileContent)
+            const character = parsedData.characters.find(item => item.id === id) || []
+            response.writeHead(200, "OK", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ character: character })
+            response.write(responseBody)
+        } else {
+            response.writeHead(401, "Unauthorized", { "Content-Type": "application/json" })
+            const responseBody = JSON.stringify({ message: 'Token inválido!' })
+            response.write(responseBody)
+        }
+
         response.end()
     } else {
         response.writeHead(404, "Not Found")
