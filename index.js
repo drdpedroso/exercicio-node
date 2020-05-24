@@ -1,14 +1,26 @@
-const express = require("express");
+const express = require('express');
+const bodyParser = require('body-parser');
+const controllers = require('./controller.js')
+const middlewares = require('./middlewares.js')
 const app = express();
-const bodyParser = require("body-parser");
-const controllers = require('./controller')
-app.use(bodyParser.urlencoded());
-app.use(bodyParser.json());
+app.use(express.json());
 
-app.get("/cats", controllers.catsController)
-app.post("/cat/:id", controllers.catController);
-app.post("/cat/new", controllers.newCatController);
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.listen(3000, function () {
-    console.log("Ouvindo a porta 3000!");
+app.use(middlewares.log)
+app.use(middlewares.checkAuthToken)
+
+app.get('/products', controllers.getAllProducts);
+
+app.get('/product/:id', controllers.getProductById);
+
+app.post('/product', controllers.createProduct);
+
+app.delete('/product/:id', controllers.deleteProductById);
+
+app.put('/product/:id', controllers.editProductById);
+
+
+app.listen(3000, () => {
+    console.log("App listening on port 3000!");
 });

@@ -1,57 +1,75 @@
-const mysql = require("mysql");
+const fs = require('fs');
 
-const connection = mysql.createConnection({
-    host: "sql10.freesqldatabase.com",
-    user: "sql10333515",
-    password: "Wrtv1TdvNx",
-    port: "3306",
-    database: "sql10333515",
-})
-
-class Cat {
-    constructor() {
-        this._id = null
-        this._name = null
-        this._age = null
+class Product {
+    constructor(id, name, brand) {
+        this.id = id || null;
+        this.name = name;
+        this.brand = brand;
     }
 
-    init(id, name, age) {
-        this._id = id
-        this._name = name
-        this._age = age
+    getAll() {
+        const rawData = fs.readFileSync('./products.json');
+        const products = JSON.parse(rawData);
+
+        return products;
     }
 
-    getAll () {
-        const query = "SELECT * FROM cats";
+    getById(id) {
+        const rawData = fs.readFileSync('./products.json');
+        const product = JSON.parse(rawData)
+            .find((product) => product.id === parseInt(id));
 
-        return new Promise((resolve, reject) => {
-            connection.query(query, (err, results) => {
-                if (err) reject(err)
-                resolve(results)
-            })
-        })
+        return product;
     }
 
-    getCatById(id) {
-        const query = `SELECT * from cats WHERE id="${id}"`
-        return new Promise((resolve, reject) => {
-            connection.query(query, (err, results) => {
-                if (err) reject(err)
-                resolve(results)
-            })
-        })
+    add() {
+        const rawData = fs.readFileSync('./products.json')
+        const products = JSON.parse(rawData);
+
+        this.id = products[products.length - 1].id + 1
+        products.push(this);
+
+        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
+            if (err) throw err;
+            console.log('write file ok');
+        });
+
+        return this;
     }
 
-    add(id, name, age) {
-        const query = `INSERT INTO cats (id, name, age) VALUES (${id}, "${name}", ${age})`
+    delete(id) {
+        const rawData = fs.readFileSync('./products.json');
+        const products = JSON.parse(rawData).filter(product => product.id !== parseInt(id));
 
-        return new Promise((resolve, reject) => {
-            connection.query(query, (err, results) => {
-                if (err) reject(err)
-                resolve(results)
-            })
-        })
+        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
+            if (err) throw err;
+            console.log('write file ok');
+        });
+
+        return products;
+    }
+
+    addOrUpdate(id) {
+        const rawData = fs.readFileSync('./products.json');
+        const products = JSON.parse(rawData);
+
+        const product = products.find(product => product.id === parseInt(id));
+
+        if (product) {
+            product.name = this.name;
+            product.brand = this.brand;
+        } else {
+            this.id = products[products.length - 1].id + 1;
+            products.push(this);
+        }
+
+        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
+            if (err) throw err;
+            console.log('write file ok');
+        });
+
+        return products;
     }
 }
 
-module.exports = Cat
+module.exports = Product;

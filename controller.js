@@ -1,46 +1,69 @@
-const fs = require('fs');
-const path = require('path');
-const Cat = require('./model')
+const ProductModel = require("./model");
 
-const generateRandomId = () => {
-    return Math.floor(Math.random() * 300) + 1;
-};
+const getAllProducts = (req, res) => {
+    const products = new ProductModel().getAll();
 
-const newCatController = (req, res) => {
-    const { name, age } = req.body;
-    const id = generateRandomId()
-    const rawView = fs.readFileSync(path.resolve(__dirname, 'success.html'), 'utf8')
-    const model = new Cat()
-    model.add(id, name, age).then(data => {
-        res.send(rawView)
-    })
+    res.status(200)
+    res.json(products)
 }
 
-const catsController = (req, res) => {
-    const rawView = fs.readFileSync(path.resolve(__dirname, 'list.html'), 'utf8')
-    const model = new Cat()
-    model.getAll().then(data => {
-        const content = data.reduce((prev, curr) => {
-            return prev + `<div>${curr.name}</div>`;
-        }, "");
-        const view = rawView.replace('$list', content)
-        res.send(view)
-    })
+const getProductById = (req, res) => {
+    const product = new ProductModel().getById(req.params.id);
+
+    if (product === null) {
+        res.status(404)
+        return res.send({ message: 'Produto não encontrado' });
+    }
+
+    res.status(200)
+    res.json(product);
 }
 
-const catController = (req, res) => {
-    const {id} = req.params
-    const rawView = fs.readFileSync(path.resolve(__dirname, 'details.html'), 'utf8')
-    const model = new Cat()
-    model.getCatById(id).then(data => {
-        const content = data.reduce((prev, curr) => {
-            return prev + `<div>${curr.name}</div>`;
-        }, "");
-        const view = rawView.replace('$list', content)
-        res.send(view)
-    })
+const createProduct = (req, res) => {
+    const { name, brand } = req.body;
+
+    try {
+        const newProduct = new ProductModel(name, brand);
+        newProduct.add();
+
+        res.status(200)
+        res.json(newProduct);
+    } catch (e) {
+        res.status(500)
+        res.send({ message: 'Algo deu errado' });
+    }
+}
+
+const deleteProductById =  (req, res) => {
+    try {
+        const products = new ProductModel().delete(req.params.id);
+
+        res.status(200)
+        res.json(products);
+    } catch (e) {
+        res.status(500)
+        res.send({ message: 'Algo deu errado' });
+    }
+}
+
+const editProductById = (req, res) => {
+    const { name, brand } = req.body;
+
+    try {
+        const products = new ProductModel(name, brand).addOrUpdate(req.params.id);
+
+        res.status(200)
+        res.json(products);
+    } catch (e) {
+        res.status(500)
+        res.send({ message: 'Algo deu errado' });
+    }
 }
 
 module.exports = {
-    newCatController, catController, catsController
+    getAllProducts,
+    getProductById,
+    createProduct,
+    deleteProductById,
+    editProductById
 }
