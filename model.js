@@ -1,75 +1,29 @@
-const fs = require('fs');
+const axios = require("axios");
 
-class Product {
-    constructor(id, name, brand) {
-        this.id = id || null;
-        this.name = name;
-        this.brand = brand;
+const BASE_URL = "https://pokeapi.co/api/v2/";
+
+class Pokedex {
+    constructor() {}
+
+    async getPokemonById(id) {
+        const response = await axios.get(`${BASE_URL}/pokemon/${id}`);
+        return {
+            id: response.data.id,
+            name: response.data.name,
+            species: response.data.species,
+        };
     }
 
-    getAll() {
-        const rawData = fs.readFileSync('./products.json');
-        const products = JSON.parse(rawData);
-
-        return products;
+    async getAllByTypeId(id) {
+        const response = await axios.get(`${BASE_URL}/type/${id}`);
+        return response.data.pokemon;
     }
 
-    getById(id) {
-        const rawData = fs.readFileSync('./products.json');
-        const product = JSON.parse(rawData)
-            .find((product) => product.id === parseInt(id));
-
-        return product;
-    }
-
-    add() {
-        const rawData = fs.readFileSync('./products.json')
-        const products = JSON.parse(rawData);
-
-        this.id = products[products.length - 1].id + 1
-        products.push(this);
-
-        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
-            if (err) throw err;
-            console.log('write file ok');
-        });
-
-        return this;
-    }
-
-    delete(id) {
-        const rawData = fs.readFileSync('./products.json');
-        const products = JSON.parse(rawData).filter(product => product.id !== parseInt(id));
-
-        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
-            if (err) throw err;
-            console.log('write file ok');
-        });
-
-        return products;
-    }
-
-    addOrUpdate(id) {
-        const rawData = fs.readFileSync('./products.json');
-        const products = JSON.parse(rawData);
-
-        const product = products.find(product => product.id === parseInt(id));
-
-        if (product) {
-            product.name = this.name;
-            product.brand = this.brand;
-        } else {
-            this.id = products[products.length - 1].id + 1;
-            products.push(this);
-        }
-
-        fs.writeFile('./products.json', JSON.stringify(products), 'utf8', (err) => {
-            if (err) throw err;
-            console.log('write file ok');
-        });
-
-        return products;
+    async searchItemsByName(name) {
+        const response = await axios.get(`${BASE_URL}/item`);
+        const results = response.data.results;
+        return results.filter((res) => res.name.includes(name));
     }
 }
 
-module.exports = Product;
+module.exports = Pokedex;
